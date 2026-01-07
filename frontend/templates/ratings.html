@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Rate Items | BVC Food Bite</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{font-family:Arial;margin:0;background:#f3f4f6}
+header{background:#ff7043;color:#fff;padding:12px 16px}
+.container{padding:18px;max-width:800px;margin:0 auto}
+.item-card{background:#fff;padding:14px;border-radius:10px;margin-bottom:14px;box-shadow:0 4px 8px rgba(0,0,0,0.1)}
+.item-name{font-weight:700;font-size:15px;margin-bottom:8px}
+.stars{display:flex;gap:4px;margin:8px 0}
+.star{font-size:24px;cursor:pointer;color:#ddd}
+.star.active{color:#ffc107}
+textarea{width:100%;padding:8px;border-radius:6px;border:1px solid #ddd;font-family:Arial;margin:8px 0}
+button{background:#ff7043;color:#fff;padding:8px 14px;border:none;border-radius:6px;cursor:pointer;font-weight:bold}
+button:hover{background:#e64a2a}
+.reviews{background:#f9f9f9;padding:10px;border-radius:6px;margin-top:10px;max-height:150px;overflow-y:auto;font-size:12px}
+.review{margin:6px 0;padding:6px;background:#fff;border-left:3px solid #ff7043}
+.avg-rating{font-weight:700;color:#ff7043;margin-bottom:8px}
+.back-link{display:block;margin-top:14px;color:#ff7043;text-decoration:none}
+</style>
+</head>
+<body>
+<header>⭐ Rate Food Items</header>
+<div class="container">
+  <p><a href="/index.html" class="back-link">← Back to Menu</a></p>
+  <div id="items"></div>
+</div>
+
+<script>
+const itemsDiv = document.getElementById('items');
+const userName = localStorage.getItem('loggedUser') || 'Anonymous';
+const userMobile = localStorage.getItem('loggedUserMobile') || '';
+
+if(!userMobile){ alert('Please login first'); location.href='/logout'; }
+
+</script>
+
+<script>
+try{ if(location.protocol === 'file:') location.href = 'http://127.0.0.1:5000/'; }catch(e){}
+
+async function loadRatings(){
+  itemsDiv.innerHTML = 'Loading your orders...';
+  
+  // Fetch user's orders
+  let orderedItems = [];
+  try{
+    const res = await fetch(`/api/orders?mobile=${encodeURIComponent(userMobile)}`);
+    if(res.ok){
+      const orders = await res.json();
+      orders.forEach(order => {
+        Object.keys(order.items || {}).forEach(itemName => {
+          if(!orderedItems.includes(itemName)) orderedItems.push(itemName);
+        });
+      });
+    }
+  }catch(e){
+    console.error('Error fetching orders:', e);
+  }
+  
+  if(!orderedItems.length){
+    itemsDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#999">You haven\'t ordered anything yet. <a href="/index.html">Order now</a> to leave ratings!</div>';
+    return;
+  }
+  
+  itemsDiv.innerHTML = '';
+  for(let itemName of orderedItems){
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    
+    let ratingData = {};
+    try{
+      const res = await fetch(`/api/ratings/item/${encodeURIComponent(itemName)}`);
+      if(res.ok) ratingData = await res.json();
+    }catch(e){}
+    
+    let avgRating = ratingData.avg_rating || 0;
+    let count = ratingData.count || 0;
+    let reviews = ratingData.ratings || [];
+    
+    card.innerHTML = `
+      <div class="item-name">${itemName}</div>
+      ${avgRating ? `<div class="avg-rating">⭐ ${avgRating}/5 (${count} reviews)</div>` : ''}
+      <div class="stars" data-item="${itemName}">
+        ${[1,2,3,4,5].map(i=>`<span class="star" data-rating="${i}" onclick="setRating(this, '${itemName}')">★</span>`).join('')}
+      </div>
+      <textarea placeholder="Add your review (optional)" data-review="${itemName}" rows="2"></textarea>
+      <button onclick="submitRating('${itemName}')">Submit Rating</button>
+      ${reviews.length ? `<div class="reviews">${reviews.map(r=>`<div class="review"><b>${r.user_name}:</b> ⭐${r.rating} - ${r.review}</div>`).join('')}</div>` : ''}
+    `;
+    itemsDiv.appendChild(card);
+  }
+}
+
+window.setRating = function(el, itemName){
+  const rating = parseInt(el.getAttribute('data-rating'));
+  const starsDiv = document.querySelector(`.stars[data-item="${itemName}"]`);
+  starsDiv.querySelectorAll('.star').forEach((s, i)=>{
+    s.classList.toggle('active', i+1 <= rating);
+  });
+  starsDiv.dataset.selected = rating;
+};
+
+window.submitRating = async function(itemName){
+  const starsDiv = document.querySelector(`.stars[data-item="${itemName}"]`);
+  const rating = parseInt(starsDiv.dataset.selected) || 0;
+  if(!rating){ alert('Select a rating'); return; }
+  
+  const review = document.querySelector(`textarea[data-review="${itemName}"]`).value;
+  
+  try{
+    const res = await fetch('/api/ratings', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        user_mobile: userMobile,
+        user_name: userName,
+        item_name: itemName,
+        rating,
+        review
+      })
+    });
+    if(res.ok){ alert('Rating submitted!'); loadRatings(); }
+    else alert('Error submitting rating');
+  }catch(e){ alert('Error: '+e); }
+};
+
+loadRatings();
+</script>
+</body>
+</html>

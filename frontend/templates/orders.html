@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Orders | BVC Food Bite</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{font-family:Arial;margin:0;background:#f3f4f6}
+header{background:#ff7043;color:#fff;padding:12px 16px}
+.container{padding:18px}
+.order{background:#fff;padding:12px;border-radius:10px;margin-bottom:12px}
+.order h4{margin:0 0 8px}
+.status{font-weight:bold}
+</style>
+</head>
+<body>
+<header>🍽️ My Orders</header>
+<div class="container">
+  <div id="orders">Loading...</div>
+  <p><a href="/index.html">Back to Menu</a></p>
+</div>
+<script>
+// Sync server-provided name/mobile into localStorage when available
+;(function(){
+  const serverName = "{{ server_name|e }}";
+  const serverMobile = "{{ server_mobile|e }}";
+  const serverRole = "{{ server_role|e }}";
+  try{ 
+    if(serverName) localStorage.setItem('loggedUser', serverName);
+    if(serverMobile) localStorage.setItem('loggedUserMobile', serverMobile);
+    if(serverRole) localStorage.setItem('role', serverRole);
+  }catch(e){}
+})();
+
+const ordersDiv = document.getElementById('orders');
+const mobile = localStorage.getItem('loggedUserMobile') || localStorage.getItem('loggedUser') || '';
+if(!mobile){ alert('Please login first'); location.href='/logout'; }
+
+</script>
+
+<script>
+try{ if(location.protocol === 'file:') location.href = 'http://127.0.0.1:5000/'; }catch(e){}
+</script>
+
+<script>
+async function load(){
+  ordersDiv.innerText = 'Loading...';
+  try{
+    const res = await fetch('/api/orders?mobile=' + encodeURIComponent(mobile));
+    if(!res.ok) throw new Error('API');
+    const orders = await res.json();
+    render(orders);
+  }catch(e){
+    // fallback to localStorage
+    const orders = JSON.parse(localStorage.getItem('orders')||'[]').filter(o=>o.mobile===mobile);
+    render(orders);
+  }
+}
+
+function render(orders){
+  if(!orders.length){ ordersDiv.innerHTML = '<div>No orders yet</div>'; return; }
+  ordersDiv.innerHTML = '';
+  orders.slice().reverse().forEach(o=>{
+    const d = document.createElement('div'); d.className='order';
+    d.innerHTML = `
+      <h4>${o.id}</h4>
+      <div>Items: ${Object.entries(o.items||{}).map(([k,v])=>k+ ' × '+v).join(', ')}</div>
+      <div>Delivery: ${o.preOrder && o.delivery ? (o.delivery.date + ' ' + o.delivery.time) : 'Now'}</div>
+      <div>Status: <span class='status'>${o.status || 'PENDING'}</span></div>
+    `;
+    ordersDiv.appendChild(d);
+  });
+}
+
+load();
+setInterval(load, 10000); // refresh every 10s
+</script>
+</body>
+</html>

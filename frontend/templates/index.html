@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BVC FOOD BITE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+ 
+<body data-server-name="{{ server_name|e }}" data-server-mobile="{{ server_mobile|e }}" data-server-role="{{ server_role|e }}">
+
+<!-- Razorpay checkout script (load first) -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+try{ if(location.protocol === 'file:') location.href = 'http://127.0.0.1:5000/'; }catch(e){}
+</script>
+
+<header>
+  <div>🍽️ BVC FOOD BITE</div>
+  <div class="user-box">
+    <button id="reqBtn" title="Requirements" style="margin-right:8px;">⚙️ Requirements</button>
+    <button id="notifBell" class="notif-bell" title="Notifications" aria-label="Notifications">
+      <span class="bell-wrap"><span class="bell-icon">🔔</span></span>
+      <span id="notifCount" class="badge hidden">0</span>
+    </button>
+    <div class="user-summary">
+      <span id="userMobile" style="font-size:14px"></span>
+      <button id="userToggle" class="user-arrow" aria-label="Toggle user details">▾</button>
+    </div>
+
+    <div id="userDetails" class="user-details hidden" role="region" aria-hidden="true">
+      <div class="user-details-name" id="displayName">—</div>
+      <div class="user-details-mobile">📱 <span id="displayMobile">Not provided</span></div>
+      <div class="user-details-actions">
+        <a href="/orders.html" class="orders-link">📦 My Orders</a>
+        <a href="/ratings.html" class="orders-link">⭐ Rate Items</a>
+        <button class="logout" onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Requirements panel (toggled) -->
+<div id="requirementsPanel" class="requirements-panel hidden">
+  <h4>Requirements</h4>
+  <div class="spice-row-mini">
+    <div class="spice-label">🌶️ Spice level:</div>
+    <select id="spiceLevel" class="spice-select" aria-label="Select spice level">
+      <option value="Mild">Mild</option>
+      <option value="Medium">Medium</option>
+      <option value="Hot">Hot</option>
+      <option value="Extra Hot">Extra Hot</option>
+    </select>
+  </div>
+  <label style="display:flex;align-items:center;gap:8px;margin-top:8px">
+    <input type="checkbox" id="preOrder" onchange="toggleOffer()">
+     🎂 Pre-Order (10% OFF)
+  </label>
+
+  <div id="dateTimeBox" class="hidden" style="margin-top:8px">
+    <input type="date" id="orderDate">
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+      <input type="time" id="orderTime">
+      <select id="orderAmpm">
+        <option value="">AM/PM</option>
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
+    <p style="font-size:12px">⏰ Select AM or PM when pre-ordering</p>
+    <p style="font-size:12px;color:#e64a2a">⚠️ Please place pre-orders at least one day before delivery.</p>
+  </div>
+  <p style="font-size:13px;color:#555;margin-top:8px">Set any special requirements here before placing order.</p>
+</div>
+
+<!-- HERO -->
+<section class="hero" role="region" aria-label="Hero">
+  <div class="hero-inner">
+    <h1>Delicious Food, Fast Serving</h1>
+    <p class="lead">Order from BVC Food Court - Fresh, Hot & Always On Time</p>
+    <div class="search-box">
+      <input type="search" placeholder="Search your favorite food..." aria-label="Search food">
+    </div>
+  </div>
+  <!-- Corner images: place the files into frontend/images/ with these filenames -->
+  <img class="hero-img left" src="/images/view-paper-bag-with-vegetables.png" alt="bag with vegetables">
+  <img class="hero-img right" src="/images/food-bowl-chopsticks-top-view.png" alt="food bowl with chopsticks">
+</section>
+
+<!-- CATEGORIES -->
+<div class="tabs">
+<button class="active" onclick="cat('Tiffins',this)">🍽️ Tiffins</button>
+<button onclick="cat('Starters',this)">🍟 Starters</button>
+<button onclick="cat('Biryanis',this)">🍗 Biryanis</button>
+<button onclick="cat('Fried Rice',this)">🍚 Fried Rice</button>
+<button onclick="cat('Noodles',this)">🍜 Noodles</button>
+<button onclick="cat('Beverages',this)">☕ Beverages</button>
+<button onclick="cat('Snacks',this)">🥟 Snacks</button>
+<button onclick="toggleMealsSub(this)">🍱 Meals</button>
+<button onclick="showRecommendations(this)">💡 Recommended</button>
+</div>
+
+<!-- Meals sub-options removed (All Meals button omitted as requested) -->
+
+<!-- FILTERS -->
+<div class="filters">
+<select id="mood" onchange="render()">
+  <option value="">All Moods</option>
+  <option value="light">Light</option>
+  <option value="snack">Snack</option>
+  <option value="normal">Normal</option>
+  <option value="hungry">Hungry</option>
+  <option value="happy">Happy</option>
+  <option value="party">Party</option>
+</select>
+
+<select id="budget" onchange="render()">
+  <option value="">All Budgets</option>
+  <option value="50">Under ₹50</option>
+  <option value="100">Under ₹100</option>
+  <option value="150">Under ₹150</option>
+</select>
+
+<div class="filter-buttons">
+  <button class="active" onclick="vegFilter('all',this)">🥗 All</button>
+</div>
+<!-- Non-veg mode toggle: when OFF, non-veg items are hidden globally -->
+<div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:8px">
+  <div id="nonVegToggle" class="toggle-switch" role="button" tabindex="0" aria-pressed="true">
+    <div class="knob"></div>
+  </div>
+  <div id="nonVegLabel" style="font-weight:700;color:#ff7043">Non-Veg: ON</div>
+</div>
+</div>
+
+<!-- MENU -->
+<div class="container" id="menu"></div>
+
+<!-- CART -->
+<aside class="cart elegant-cart" aria-label="Shopping cart">
+  <div class="cart-header">
+    <h3>🛒 Cart</h3>
+    <div class="cart-header-actions">
+      <button class="btn-edit" onclick="document.getElementById('requirementsPanel').classList.toggle('hidden')">Edit</button>
+    </div>
+  </div>
+
+  <div id="requirementsSummary" class="requirements-row">Requirements: <span id="reqSummaryText">No special requirements</span></div>
+
+  <div class="cart-body">
+    <ul id="cartItems" class="cart-items" aria-live="polite"></ul>
+    <div id="cartEmpty" class="cart-empty">Your cart is empty</div>
+  </div>
+
+  <div class="cart-footer">
+    <div class="cart-summary">
+      <div class="summary-row"><span>Discount</span><span id="discount" class="offer">—</span></div>
+      <div class="summary-row total-row"><span>Total</span><strong id="total">₹0</strong></div>
+    </div>
+
+    <div class="cart-actions">
+      <button class="btn-outline" onclick="window.scrollTo({top:0,behavior:'smooth'})">Continue</button>
+      <button class="btn-primary" onclick="order()">Checkout</button>
+    </div>
+  </div>
+</aside>
+
+<!-- PAYMENT OPTIONS (below cart) -->
+<div class="payment-options">
+  <button id="payCashBtn" class="payment-button" onclick="selectPayment('Cash', this)">💵 Cash</button>
+  <button id="payRazorBtn" class="payment-button" onclick="selectPayment('Razorpay', this)">🟡 Razorpay</button>
+</div>
+
+<!-- ACTIONS -->
+<div class="actions">
+<button class="order" onclick="order()">Place Order</button>
+<a class="call" href="tel:+917671953326">📞 Call</a>
+<a class="whatsapp" href="https://wa.me/917671953326">💬 WhatsApp</a>
+</div>
+
+<footer>
+<div class="footer-container">
+  <!-- Brand Section -->
+  <div class="footer-section footer-brand">
+    <h2>🍽️ BVC FOOD BITE</h2>
+    <p>Premium food court service at BVC Engineering College</p>
+    
+    <!-- Operating Hours -->
+    <div class="footer-hours">
+      <div class="footer-hours-title">⏰ Operating Hours</div>
+      <div class="footer-hours-day">📅 Monday - Saturday</div>
+      <div class="footer-hours-time">8:00 AM - 8:00 PM</div>
+    </div>
+  </div>
+  
+  <!-- Quick Links Section -->
+  <div class="footer-section">
+    <h3>Quick Links</h3>
+    <ul>
+      <li><a href="/orders.html">📦 My Orders</a></li>
+      <li><a href="/ratings.html">⭐ Rate Items</a></li>
+    </ul>
+  </div>
+  
+  <!-- About Section -->
+  <div class="footer-section">
+    <h3>About</h3>
+    <ul>
+      <li><a href="/about.html">About Us</a></li>
+    </ul>
+    
+    <!-- Contact Icons -->
+    <div class="footer-icons">
+      <a href="tel:+917671953326" title="Call us">📞</a>
+      <a href="https://wa.me/917671953326" title="Message on WhatsApp">💬</a>
+    </div>
+  </div>
+</div>
+
+<!-- Footer Bottom -->
+<div class="footer-bottom">
+  © 2026 BVC Engineering College Food Court | 📞 7671953326
+</div>
+</footer>
+
+<script>
+// If server provided name/mobile, sync them to localStorage (handles clients where localStorage is missing/masked)
+;(function(){
+  // Read server-provided values from data-attributes to avoid embedding raw Jinja tokens inside JS
+  const serverName = document.body.dataset.serverName || "";
+  const serverMobile = document.body.dataset.serverMobile || "";
+  const serverRole = document.body.dataset.serverRole || "";
+  try{
+    if(serverName) localStorage.setItem('loggedUser', serverName);
+    if(serverMobile) localStorage.setItem('loggedUserMobile', serverMobile);
+    if(serverRole) localStorage.setItem('role', serverRole);
+  }catch(e){}
+})();
+
+/* DOM ELEMENTS */
+const menu = document.getElementById("menu");
+const cartItems = document.getElementById("cartItems");
+const discountEl = document.getElementById("discount");
+const totalEl = document.getElementById("total");
+const spiceSelect = document.getElementById('spiceLevel');
+const preOrder = document.getElementById("preOrder");
+const dateTimeBox = document.getElementById("dateTimeBox");
+const moodSelect = document.getElementById("mood");
+const budgetSelect = document.getElementById("budget");
+const userToggle = document.getElementById('userToggle');
+const userDetails = document.getElementById('userDetails');
+const displayName = document.getElementById('displayName');
+const displayMobile = document.getElementById('displayMobile');
+const payCashBtn = document.getElementById('payCashBtn');
+const payRazorBtn = document.getElementById('payRazorBtn');
+const searchInput = document.querySelector('.search-box input');
+const reqBtn = document.getElementById('reqBtn');
+const nonVegToggle = document.getElementById('nonVegToggle');
+const nonVegLabel = document.getElementById('nonVegLabel');
+
+if(reqBtn){ reqBtn.addEventListener('click', ()=>{ document.getElementById('requirementsPanel').classList.toggle('hidden'); }); }
+
+// Non-Veg mode: when false, hide non-veg items globally
+let nonVegEnabled = true;
+try{ nonVegEnabled = (localStorage.getItem('nonVegEnabled') || 'true') === 'true'; }catch(e){}
+function updateNonVegUI(){
+  if(!nonVegToggle) return;
+  nonVegToggle.classList.toggle('active', nonVegEnabled);
+  nonVegToggle.setAttribute('aria-pressed', nonVegEnabled ? 'true' : 'false');
+  if(nonVegLabel) nonVegLabel.innerText = nonVegEnabled ? 'Non-Veg: ON' : 'Non-Veg: OFF';
+}
+function toggleNonVeg(){ nonVegEnabled = !nonVegEnabled; try{ localStorage.setItem('nonVegEnabled', nonVegEnabled ? 'true' : 'false'); }catch(e){} updateNonVegUI(); render(); }
+if(nonVegToggle) {
+  nonVegToggle.addEventListener('click', toggleNonVeg);
+  nonVegToggle.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleNonVeg(); } });
+  updateNonVegUI();
+}
+
+// Search state
+let searchTerm = '';
+if(searchInput){
+  searchInput.addEventListener('input', function(e){
+    searchTerm = (e.target.value || '').trim().toLowerCase();
+    // keep current category but re-render with search filtering
+    render();
+  });
+}
+
+function updateReqSummary(){
+  try{
+    const spice = (localStorage.getItem('spiceLevel') || spiceSelect.value || 'Medium');
+    const pre = preOrder.checked ? ('Pre-Order ' + (document.getElementById('orderDate').value || '')) : 'Normal';
+    const txt = `Spice: ${spice} · ${pre}`;
+    const el = document.getElementById('reqSummaryText'); if(el) el.innerText = txt;
+  }catch(e){}
+}
+
+// wire summary updates
+if(spiceSelect) spiceSelect.addEventListener('change', function(){ try{ localStorage.setItem('spiceLevel', spiceSelect.value);}catch(e){} updateReqSummary(); });
+if(preOrder) preOrder.addEventListener('change', function(){ updateReqSummary(); });
+
+/* USER DETAILS */
+const storedName = localStorage.getItem('loggedUser') || '';
+const storedMobile = localStorage.getItem('loggedUserMobile') || '';
+document.getElementById("userMobile").innerText = storedName || 'Guest';
+
+// populate expanded details
+displayName.innerText = storedName || '—';
+displayMobile.innerText = storedMobile || 'Not provided';
+
+function toggleUserDetails(){
+  const expanded = !userDetails.classList.toggle('hidden');
+  userDetails.setAttribute('aria-hidden', String(!expanded));
+  userToggle.classList.toggle('rotate', expanded);
+}
+userToggle.addEventListener('click', toggleUserDetails);
+
+// Spice level: persist selection and show in cart
+try{
+  const storedSpice = localStorage.getItem('spiceLevel') || 'Medium';
+  if(spiceSelect) spiceSelect.value = storedSpice;
+}catch(e){}
+if(spiceSelect){
+  spiceSelect.addEventListener('change', function(){
+    try{ localStorage.setItem('spiceLevel', spiceSelect.value); }catch(e){}
+    updateCart();
+  });
+}
+
+// Payment selection: persist and toggle active class
+(function(){
+  try{
+    const storedPay = localStorage.getItem('paymentMethod') || 'Cash';
+    if(storedPay === 'Razorpay' && payRazorBtn) payRazorBtn.classList.add('active');
+    else if(payCashBtn) payCashBtn.classList.add('active');
+  }catch(e){}
+})();
+function selectPayment(method, el){
+  try{ localStorage.setItem('paymentMethod', method);}catch(e){}
+  if(payCashBtn) payCashBtn.classList.toggle('active', method === 'Cash');
+  if(payRazorBtn) payRazorBtn.classList.toggle('active', method === 'Razorpay');
+}
+
+/* LOGOUT */
+function logout(){
+  localStorage.clear();
+  // call server logout so session is cleared server-side
+  location.href='/logout';
+}
+
+/* DATA */
+let category="Tiffins";
+let vegType="all";
+let cart={};
+
+const foods = [
+{ name:"Idly (3)", price:25, mood:"light", category:"Tiffins", type:"veg", img:"../images/idly.jpg" },
+ { name:"Bajji (4)", price:25, mood:"snack", category:"Tiffins", type:"veg", img:"../images/bajji.jpg" },
+ { name:"Poori (2)", price:35, mood:"normal", category:"Tiffins", type:"veg", img:"../images/poori.jpg" }, 
+ { name:"Plain Dosa", price:30, mood:"light", category:"Tiffins", type:"veg", img:"../images/plaindosa.jpg" },
+ { name:"Masala Dosa", price:35, mood:"normal", category:"Tiffins", type:"veg", img:"../images/masaladosa.jpg" }, 
+ { name:"Onion Dosa", price:35, mood:"normal", category:"Tiffins", type:"veg", img:"../images/oniondosa.jpg" },
+ { name:"Egg Dosa", price:40, mood:"normal", category:"Tiffins", type:"non-veg", img:"../images/eggdosa.jpg" }, 
+ { name:"Chapathi", price:30, mood:"light", category:"Tiffins", type:"veg", img:"../images/chapati.jpg" }, 
+ { name:"Parotta", price:30, mood:"light", category:"Tiffins", type:"veg", img:"../images/parota.jpg" }, 
+ // 🍽️ MEALS
+ { name:"Veg Meals", price:60, mood:"hungry", category:"Meals", type:"veg", img:"../images/vegmeals.jpg" },
+ { name:"Parcel Veg Meals", price:70, mood:"hungry", category:"Meals", type:"veg", img:"../images/meals.jpg" },
+ { name:"Chicken Meals", price:80, mood:"hungry", category:"Meals", type:"non-veg", img:"../images/chickenmeals.jpg" },
+ { name:"Parcel Chicken Meals", price:100, mood:"hungry", category:"Meals", type:"non-veg", img:"../images/meals.jpg" },
+ // 🍛 BIRYANIS
+ { name:"Veg Biryani", price:100, mood:"normal", category:"Biryanis", type:"veg", img:"../images/vegbiryani.jpg" }, 
+ { name:"Paneer Biryani (Half)", price:100, mood:"happy", category:"Biryanis", type:"veg", img:"../images/pannerbiryani.jpg" },
+ { name:"Paneer Biryani (Full)", price:130, mood:"happy", category:"Biryanis", type:"veg", img:"../images/pannerbiryani.jpg" },
+ { name:"Dum Chicken Biryani (Single)", price:100, mood:"happy", category:"Biryanis", type:"non-veg", img:"../images/dumchicken.jpg" },
+ { name:"Dum Chicken Biryani (Full)", price:130, mood:"happy", category:"Biryanis", type:"non-veg", img:"../images/dumchicken.jpg" }, 
+ { name:"Special Chicken Biryani", price:150, mood:"party", category:"Biryanis", type:"non-veg", img:"../images/specialchickenbiryani.jpg" },
+ { name:"Lollipop Biryani", price:150, mood:"party", category:"Biryanis", type:"non-veg", img:"../images/lollipopbiryani.jpg" }, 
+ { name:"Fry Piece Biryani", price:150, mood:"party", category:"Biryanis", type:"non-veg", img:"../images/frypiece.jpg" }, 
+ { name:"Chicken Kebab Biryani", price:150, mood:"party", category:"Biryanis", type:"non-veg", img:"../images/chickenkebab.jpg" }, 
+ { name:"Prawns Biryani", price:150, mood:"party", category:"Biryanis", type:"non-veg", img:"../images/prawnsbiryani.jpg" },
+ { name:"Wings Biryani", price:150, mood:"party", category:"Biryanis", type:"non-veg", img:"../images/wingsbiryani.jpg" }, 
+ { name:"Mughlai Biryani(Half)", price:130, mood:"party", category:"Biryanis", type:"non-veg", img:"../images/mughalaibiryani.jpg" }, 
+
+ { name:"Mughlai Biryani(Full)", price:150, mood:"party", category:"Biryanis", img:"../images/mughalaibiryani.jpg" }, 
+
+ // 🍚 FRIED RICE 
+ { name:"Veg Fried Rice (Half)", price:60, mood:"light", category:"Fried Rice", type:"veg", img:"../images/vegfriedrice.jpg" },
+ { name:"Veg Fried Rice (Full)", price:70, mood:"light", category:"Fried Rice", type:"veg", img:"../images/vegfriedrice.jpg" },
+ { name:"Egg Fried Rice (Half)", price:70, mood:"normal", category:"Fried Rice", type:"non-veg", img:"../images/eggfriedrice.jpg" },
+ { name:"Egg Fried Rice (Full)", price:80, mood:"normal", category:"Fried Rice", type:"non-veg", img:"../images/eggfriedrice.jpg" },
+ { name:"Chicken Fried Rice (Half)", price:80, mood:"hungry", category:"Fried Rice", type:"non-veg", img:"../images/chickenfriedrice.jpg" },
+ { name:"Chicken Fried Rice (Full)", price:90, mood:"hungry", category:"Fried Rice", type:"non-veg", img:"../images/chickenfriedrice.jpg" },
+ // 🍜 NOODLES
+ { name:"Veg Noodles (Half)", price:60, mood:"light", category:"Noodles", type:"veg", img:"../images/vegnoodles.jpg" },
+ { name:"Veg Noodles (Full)", price:70, mood:"light", category:"Noodles", type:"veg", img:"../images/vegnoodles.jpg" },
+ { name:"Egg Noodles (Half)", price:70, mood:"normal", category:"Noodles", type:"non-veg", img:"../images/eggnoodles.jpg" },
+ { name:"Egg Noodles (Full)", price:80, mood:"normal", category:"Noodles", type:"non-veg", img:"../images/eggnoodles.jpg" },
+ { name:"Chicken Noodles (Half)", price:80, mood:"hungry", category:"Noodles", type:"non-veg", img:"../images/chickennoodles.jpg" },
+ { name:"Chicken Noodles (Full)", price:90, mood:"hungry", category:"Noodles", type:"non-veg", img:"../images/chickennoodles.jpg" }, 
+ // 🍟 STARTERS (VEG) 
+ { name:"Veg Manchuria", price:40, mood:"snack", category:"Starters", type:"veg", img:"../images/vegmanchuria.jpg" },
+ { name:"Gobi Manchuria", price:40, mood:"snack", category:"Starters", type:"veg", img:"../images/gobimanchuria.jpg" },
+ { name:"Chilli Paneer", price:70, mood:"happy", category:"Starters", type:"veg", img:"../images/chillipanner.jpg" }, 
+ // 🍗 STARTERS (NON-VEG)
+ { name:"Chilli Chicken", price:80, mood:"happy", category:"Starters", type:"non-veg", img:"../images/chillichicken.jpg" }, 
+ { name:"Chicken Manchuria", price:80, mood:"happy", category:"Starters", type:"non-veg", img:"../images/chickenmanchurian.jpg" }, 
+ { name:"Chicken 65", price:80, mood:"happy", category:"Starters", type:"non-veg", img:"../images/chicken65.jpg" }, 
+ { name:"Chicken Lollipop", price:120, mood:"party", category:"Starters", type:"non-veg", img:"../images/chickenlollipop.jpg" }, 
+ { name:"Chicken Wings", price:100, mood:"party", category:"Starters", type:"non-veg", img:"../images/chickenwings.jpg" }, 
+ { name:"Chicken Majestic", price:120, mood:"party", category:"Starters", type:"non-veg", img:"../images/chickenmajestic.jpg" }, 
+ { name:"Chilli Prawns", price:120, mood:"party", category:"Starters", type:"non-veg", img:"../images/chilliprawns.jpg" },
+  // 🥤 BEVERAGES 
+ { name:"Tea", price:6, mood:"light", category:"Beverages", type:"veg", img:"../images/tea.jpg" },
+ { name:"Coffee", price:10, mood:"light", category:"Beverages", type:"veg", img:"../images/coffee.jpg" },
+ // 🥟 SNACKS
+{ name:"Punugulu", price:30, mood:"snack", category:"Snacks", type:"veg", img:"../images/punugulu.jpg" },
+{ name:"Samosa", price:20, mood:"snack", category:"Snacks", type:"veg", img:"../images/samosa.jpg" },
+ ];
+
+// Recommendations state
+let recommendedList = [];
+
+function showRecommendations(buttonEl){
+  // mark tab active
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+  if(buttonEl) buttonEl.classList.add('active');
+  // fetch recommendations from server
+  const mobile = localStorage.getItem('loggedUserMobile') || '';
+  fetch('/api/recommendations' + (mobile?('?mobile='+encodeURIComponent(mobile)):'')).then(r=>r.json()).then(j=>{
+    if(j && j.recommendations){
+      recommendedList = j.recommendations;
+      category = 'RECOMMENDED';
+      render();
+    } else {
+      alert('No recommendations yet');
+    }
+  }).catch(e=>{ console.warn('recommendations err', e); alert('Failed to load recommendations'); });
+}
+
+/* CATEGORY */
+function cat(c,b){
+ category=c;
+ // hide meals subpanel when switching to other categories
+ const ms = document.getElementById('meals-sub');
+ if(ms) ms.classList.toggle('hidden', c !== 'Meals');
+ document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
+ b.classList.add("active");
+ // reset vegType when switching categories except Meals (Meals will use sub-selection)
+ if(c !== 'Meals') vegType = 'all';
+ render();
+}
+
+function toggleMealsSub(btn){
+  // show meals subpanel and mark Meals tab active
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const ms = document.getElementById('meals-sub');
+  if(ms) ms.classList.remove('hidden');
+  category = 'Meals';
+  // default show all meals
+  vegType = 'all';
+  // also clear filter-buttons active state
+  document.querySelectorAll('.filter-buttons button').forEach(x=>x.classList.remove('active'));
+  render();
+}
+
+function selectMealType(type, btn){
+  // set vegType to filter meals: 'all', 'veg', 'non-veg'
+  vegType = type;
+  // mark active in meals-sub
+  document.querySelectorAll('#meals-sub button').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  // ensure Meals tab is active
+  document.querySelectorAll('.tabs button').forEach(b=>{ if(b.textContent.includes('Meals')) b.classList.add('active'); });
+  category = 'Meals';
+  render();
+}
+
+/* VEG/NON-VEG FILTER */
+function vegFilter(type,b){
+ vegType=type;
+ document.querySelectorAll(".filter-buttons button").forEach(x=>x.classList.remove("active"));
+ b.classList.add("active");
+ render();
+}
+
+/* PREORDER */
+function toggleOffer(){
+ dateTimeBox.classList.toggle("hidden",!preOrder.checked);
+ updateCart();
+}
+
+/* RENDER */
+function render(){
+ menu.innerHTML="";
+let mood = moodSelect.value;
+let budget = budgetSelect.value;
+
+
+ // If category is special 'RECOMMENDED', show foods that match recommendedList
+ let itemsToShow = [];
+ if(category === 'RECOMMENDED'){
+   itemsToShow = foods.filter(f=> recommendedList.includes(f.name));
+ } else {
+   itemsToShow = foods.filter(f=>f.category===category);
+ }
+
+ itemsToShow
+ .filter(f=> nonVegEnabled || f.type==='veg')
+ .filter(f=>!mood||f.mood===mood)
+ .filter(f=>!budget||f.price<=budget)
+ .filter(f=>vegType==="all"||f.type===vegType)
+ .filter(f=>{
+   if(!searchTerm) return true;
+   const name = (f.name||'').toLowerCase();
+   const cat = (f.category||'').toLowerCase();
+   return name.includes(searchTerm) || cat.includes(searchTerm);
+ })
+ .forEach((f,i)=>{
+   let q=cart[f.name]||0;
+  menu.innerHTML+=`
+   <div class="card" style="animation-delay:${i*70}ms">
+     <img src="${f.img}" alt="${f.name}">
+     <h4>${f.name}</h4>
+     <div class="item-desc">${f.category} · ${f.mood}</div>
+     <div class="qty">
+       <button onclick="add('${f.name}',-1)">−</button>
+       <span>${q}</span>
+       <button onclick="add('${f.name}',1)">+</button>
+     </div>
+   </div>`;
+ });
+ updateCart();
+}
+
+function add(n,d){
+ cart[n]=(cart[n]||0)+d;
+ if(cart[n]<=0) delete cart[n];
+ render();
+}
+
+/* CART */
+function updateCart(){
+ let list=cartItems;
+ let total=0;
+ list.innerHTML="";
+ for(let k in cart){
+   let f=foods.find(x=>x.name===k);
+   total+=f.price*cart[k];
+   list.innerHTML+=`<li>${k} × ${cart[k]}</li>`;
+ }
+ let discount=0;
+ if(preOrder.checked){
+   discount=total*0.10;
+   discountEl.innerText="🎉 Discount −₹"+discount.toFixed(0);
+ } else discountEl.innerText="";
+ // show selected spice level
+ const currentSpice = (function(){ try{ return localStorage.getItem('spiceLevel')||'Medium' }catch(e){return 'Medium'} })();
+ // append spice info under cart items
+ const spiceLine = `<li>🌶️ Spice: <strong>${currentSpice}</strong></li>`;
+ list.innerHTML += spiceLine;
+ totalEl.innerText="Total: ₹"+(total-discount).toFixed(0);
+}
+
+/* ORDER */
+function order(){
+ if(!Object.keys(cart).length) return alert("Cart empty");
+  const orderDate = document.getElementById('orderDate');
+  const orderTime = document.getElementById('orderTime');
+  const orderAmpm = document.getElementById('orderAmpm');
+  if(preOrder.checked && (!orderDate.value || !orderTime.value || !orderAmpm.value))
+    return alert("Select date, time & AM/PM");
+
+  // Build order and persist to localStorage so admin can view it
+  const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+  const id = 'ORDER-' + Date.now();
+  const name = localStorage.getItem('loggedUser') || '';
+  const mobile = localStorage.getItem('loggedUserMobile') || '';
+  const payment = 'Cash';
+  const delivery = preOrder.checked ? { date: orderDate.value, time: orderTime.value + ' ' + orderAmpm.value } : null;
+  const orderObj = {
+    id,
+    name,
+    mobile,
+    payment: (function(){ try{ return localStorage.getItem('paymentMethod')||'Cash' }catch(e){return 'Cash'} })(),
+    spice: (function(){ try{ return localStorage.getItem('spiceLevel')||'Medium' }catch(e){return 'Medium'} })(),
+    preOrder: !!preOrder.checked,
+    delivery,
+    items: { ...cart },
+    status: 'PENDING'
+  };
+  orders.push(orderObj);
+  localStorage.setItem('orders', JSON.stringify(orders));
+
+  // determine payment method
+  const paymentMethod = (function(){ try{ return localStorage.getItem('paymentMethod')||'Cash' }catch(e){return 'Cash'} })();
+  const totalAmount = (function(){ let t=0; for(let k in cart){ let f=foods.find(x=>x.name===k); if(f) t+=f.price*cart[k]; } if(preOrder.checked) t=Math.round(t*0.9); return t; })();
+
+  if(paymentMethod === 'Razorpay'){
+    // create Razorpay order on server then open checkout
+    fetch('/api/razorpay_order', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ amount: totalAmount }) })
+      .then(r=>r.json()).then(j=>{
+        if(!j){ console.warn('razorpay init no-json', j); alert('Payment initialization failed (no response)'); return; }
+        if(!j.ok){ console.warn('razorpay init error', j); alert('Payment init failed: ' + (j.detail || j.error || 'unknown')); return; }
+        const ord = j.order; const key = j.key_id;
+        const options = {
+          key: key,
+          amount: ord.amount,
+          currency: ord.currency,
+          name: 'BVC FOOD BITE',
+          description: 'Order ' + orderObj.id,
+          order_id: ord.id,
+          handler: function(response){
+            orderObj.payment = 'Razorpay';
+            orderObj.payment_id = response.razorpay_payment_id;
+            orderObj.razorpay_order_id = response.razorpay_order_id;
+            fetch('/api/orders', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(orderObj) })
+              .then(rr=>{ if(rr.ok) alert('🎉 Order placed and paid!'); else alert('Order placed but server error'); })
+              .catch(()=>alert('Order placed locally, server unavailable'));
+          },
+          prefill: { name: orderObj.name, contact: orderObj.mobile }
+        };
+        try{
+          const rzp = new Razorpay(options);
+          rzp.open();
+        }catch(err){
+          console.error('Razorpay checkout error', err); alert('Failed to open Razorpay checkout: ' + (err && err.message ? err.message : err));
+        }
+      }).catch(e=>{ console.warn('razorpay init error', e); alert('Payment failed to initiate'); });
+    
+  } else {
+    // cash/online: send order immediately
+    fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(orderObj) })
+      .then(async r=>{
+        if(!r.ok){ let json={}; try{ json=await r.json(); }catch(e){} const msg=json.error||'Failed to send order to server'; alert('Order error: '+msg); }
+        else alert('🎉 Order placed successfully!');
+      }).catch(e=>{ console.warn('Order POST error', e); alert('Order placed locally (server unavailable)'); });
+  }
+  cart={}; render();
+}
+/* NOTIFICATIONS */
+const notifBell = document.getElementById('notifBell');
+const notifCountEl = document.getElementById('notifCount');
+let lastSeenNotif = parseInt(localStorage.getItem('lastSeenNotif')||'0',10) || 0;
+let notifPanel = null;
+
+function showToast(text){
+  const t = document.createElement('div'); t.className='toast'; t.innerText = text; document.body.appendChild(t);
+  setTimeout(()=>{ t.remove(); }, 5000);
+}
+
+async function fetchNotifications(){
+  try{
+    const mobile = localStorage.getItem('loggedUserMobile') || '';
+    if(!mobile) return;
+    const res = await fetch('/api/notifications?mobile='+encodeURIComponent(mobile));
+    if(!res.ok) return;
+    const j = await res.json();
+    if(j && j.notifications){
+      const notes = j.notifications;
+      // update count
+      const unread = notes.filter(n=>!n.read).length;
+      if(unread>0){ notifCountEl.innerText = unread; notifCountEl.classList.remove('hidden'); }
+      else notifCountEl.classList.add('hidden');
+      // show toasts for new notifications
+      const maxId = notes.length ? notes[0].id : 0;
+      if(maxId > lastSeenNotif){
+        // show only newest
+        const newNotes = notes.filter(n=>n.id>lastSeenNotif).reverse();
+        newNotes.forEach(n=> showToast(n.message));
+        lastSeenNotif = maxId;
+        localStorage.setItem('lastSeenNotif', String(lastSeenNotif));
+      }
+      // prepare a panel element
+      if(!notifPanel){ notifPanel = document.createElement('div'); notifPanel.className='notif-list hidden'; document.body.appendChild(notifPanel); }
+      notifPanel.innerHTML = '<h4 style="margin:0 0 8px 0;color:#ff7043">Notifications</h4>' + notes.map(n=>`<div class="note"><div style="font-size:13px">${n.message}</div><div style="font-size:11px;color:#888">${n.created_at||''}</div></div>`).join('');
+    }
+  }catch(e){ console.warn('notif fetch err', e); }
+}
+
+notifBell && notifBell.addEventListener('click', function(){ if(notifPanel) notifPanel.classList.toggle('hidden'); else fetchNotifications().then(()=>{ if(notifPanel) notifPanel.classList.remove('hidden'); }); });
+
+// Fetch notifications periodically
+setInterval(fetchNotifications, 10000);
+fetchNotifications();
+
+render();
+
+render();
+</script>
+
+</body>
+</html>

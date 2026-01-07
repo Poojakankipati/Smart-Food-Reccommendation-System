@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>About | BVC Food Courts</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:"Segoe UI", Arial, sans-serif;
+  background:linear-gradient(135deg, #f8d7e8 0%, #e8b5d4 100%);
+  min-height:100vh;
+  padding:20px;
+}
+
+.about-container{
+  max-width:1200px;
+  margin:0 auto;
+  background:rgba(255,255,255,0.95);
+  border-radius:24px;
+  padding:40px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.1)
+}
+
+/* HEADER */
+.about-header{
+  text-align:center;
+  margin-bottom:30px;
+  background:rgba(255,255,255,0.7);
+  padding:20px;
+  border-radius:16px;
+  border:2px solid #ff7043
+}
+
+.about-header h1{
+  font-size:32px;
+  color:#000;
+  margin:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px
+}
+
+.about-header p{
+  color:#333;
+  font-size:15px;
+  line-height:1.6;
+  margin-top:12px;
+  max-width:800px;
+  margin-left:auto;
+  margin-right:auto
+}
+
+/* TWO COLUMN LAYOUT */
+.about-content{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:30px;
+  margin:30px 0
+}
+
+.content-left{
+  display:flex;
+  flex-direction:column;
+  gap:16px
+}
+
+.content-left h2{
+  color:#333;
+  font-size:18px;
+  font-weight:700
+}
+
+.food-images{
+  display:flex;
+  gap:12px;
+  margin-top:12px;
+  overflow:hidden;
+  position:relative;
+  background:#f5f5f5;
+  border-radius:12px;
+  padding:8px;
+  animation:slideIn 0.8s ease-out
+}
+
+.food-carousel{
+  display:flex;
+  gap:12px;
+  animation:scroll 20s linear infinite;
+}
+
+.food-image{
+  position:relative;
+  border-radius:12px;
+  overflow:hidden;
+  aspect-ratio:3/4;
+  background:#f0f0f0;
+  flex:0 0 calc(25% - 9px);
+  min-width:140px;
+  animation:fadeInUp 0.6s ease-out backwards
+}
+
+.food-image:nth-child(1){animation-delay:0.1s}
+.food-image:nth-child(2){animation-delay:0.2s}
+.food-image:nth-child(3){animation-delay:0.3s}
+.food-image:nth-child(4){animation-delay:0.4s}
+.food-image:nth-child(5){animation-delay:0.5s}
+
+@keyframes slideIn{
+  from{
+    opacity:0;
+    transform:translateX(-20px)
+  }
+  to{
+    opacity:1;
+    transform:translateX(0)
+  }
+}
+
+@keyframes fadeInUp{
+  from{
+    opacity:0;
+    transform:translateY(20px)
+  }
+  to{
+    opacity:1;
+    transform:translateY(0)
+  }
+}
+
+@keyframes scroll{
+  0%{transform:translateX(0)}
+  100%{transform:translateX(calc(-100% - 12px))}
+}
+
+.food-image img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transition:transform 0.3s ease
+}
+
+.food-image:hover img{
+  transform:scale(1.05)
+}
+
+.food-label{
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  background:rgba(0,0,0,0.7);
+  color:#fff;
+  text-align:center;
+  padding:8px;
+  font-size:12px;
+  font-weight:700
+}
+
+.content-right{
+  display:flex;
+  flex-direction:column;
+  gap:16px
+}
+
+.content-right h2{
+  color:#333;
+  font-size:18px;
+  font-weight:700
+}
+
+.promise-list{
+  list-style:none;
+  display:flex;
+  flex-direction:column;
+  gap:14px
+}
+
+.promise-list li{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  font-size:15px;
+  color:#333;
+  line-height:1.5
+}
+
+.promise-list li::before{
+  content:"✓";
+  color:#ff7043;
+  font-weight:700;
+  font-size:18px;
+  flex-shrink:0;
+  margin-top:-2px
+}
+
+/* CTA BUTTONS */
+.cta-buttons{
+  display:flex;
+  justify-content:center;
+  gap:16px;
+  margin-top:40px;
+  flex-wrap:wrap
+}
+
+.btn{
+  padding:14px 28px;
+  font-size:15px;
+  font-weight:700;
+  border:none;
+  border-radius:20px;
+  cursor:pointer;
+  transition:all 0.3s ease;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:8px
+}
+
+.btn-explore{
+  background:#ff7043;
+  color:#fff;
+  box-shadow:0 6px 20px rgba(255,112,67,0.3)
+}
+
+.btn-explore:hover{
+  background:#ff5722;
+  transform:translateY(-2px);
+  box-shadow:0 10px 30px rgba(255,112,67,0.4)
+}
+
+.btn-logout{
+  background:#263238;
+  color:#fff;
+  box-shadow:0 6px 20px rgba(38,50,56,0.3)
+}
+
+.btn-logout:hover{
+  background:#1a252a;
+  transform:translateY(-2px);
+  box-shadow:0 10px 30px rgba(38,50,56,0.4)
+}
+
+/* 📱 Mobile */
+@media(max-width:768px){
+  .about-container{
+    padding:20px
+  }
+  
+  .about-header h1{
+    font-size:24px
+  }
+  
+  .about-content{
+    grid-template-columns:1fr
+  }
+  
+  .food-images{
+    grid-template-columns:repeat(2,1fr)
+  }
+  
+  .cta-buttons{
+    flex-direction:column
+  }
+  
+  .btn{
+    width:100%;
+    justify-content:center
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="about-container">
+  
+  <!-- HEADER -->
+  <div class="about-header">
+    <h1>🏠 BVC FOOD COURTS</h1>
+    <p>
+      <b>BVC Food Courts</b> is the heart of campus dining at <b>BVC Engineering College</b>, serving students and faculty with
+      <b>hygienic, affordable, and delicious food</b> every day.
+    </p>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="about-content">
+    
+    <!-- LEFT: Food Options -->
+    <div class="content-left">
+      <h2>🍽️ ORDER OUR BEST FOOD OPTIONS</h2>
+      <div class="food-images">
+        <div class="food-carousel">
+          <!-- Tiffins -->
+          <div class="food-image">
+            <img src="../images/masaladosa.jpg" alt="Tiffins">
+            <div class="food-label">TIFFINS</div>
+          </div>
+          <!-- Starters -->
+          <div class="food-image">
+            <img src="../images/chillichicken.jpg" alt="Starters">
+            <div class="food-label">STARTERS</div>
+          </div>
+          <!-- Biryanis -->
+          <div class="food-image">
+            <img src="../images/specialchickenbiryani.jpg" alt="Biryanis">
+            <div class="food-label">BIRYANIS</div>
+          </div>
+          <!-- Fried Rice -->
+          <div class="food-image">
+            <img src="../images/chickenfriedrice.jpg" alt="Fried Rice">
+            <div class="food-label">FRIED RICE</div>
+          </div>
+          <!-- Noodles -->
+          <div class="food-image">
+            <img src="../images/chickennoodles.jpg" alt="Noodles">
+            <div class="food-label">NOODLES</div>
+          </div>
+          <!-- Duplicate for seamless loop -->
+          <div class="food-image">
+            <img src="../images/masaladosa.jpg" alt="Tiffins">
+            <div class="food-label">TIFFINS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Our Promise -->
+    <div class="content-right">
+      <h2>🎯 OUR PROMISE</h2>
+      <ul class="promise-list">
+        <li>Budget-friendly prices</li>
+        <li>Quick service for busy schedules</li>
+        <li>AI-based smart food recommendations</li>
+        <li>Special birthday discounts 🎂</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- BUTTONS -->
+  <div class="cta-buttons">
+    <button class="btn btn-explore" onclick="goMenu()">🍴 Explore Menu</button>
+    <button class="btn btn-logout" onclick="logout()">🚪 Logout</button>
+  </div>
+
+</div>
+
+<script>
+try{ if(location.protocol === 'file:') location.href = 'http://127.0.0.1:5000/'; }catch(e){}
+
+// 🔐 PAGE PROTECTION
+const user = localStorage.getItem("loggedUser");
+const role = localStorage.getItem("role");
+
+if(!user || role !== "user"){
+  alert("Please login first");
+  window.location.href = "/logout";
+}
+
+/* GO TO MENU */
+function goMenu(){
+  window.location.href = "/index.html";
+}
+
+/* LOGOUT */
+function logout(){
+  localStorage.clear();
+  window.location.href = "/logout";
+}
+</script>
+
+</body>
+</html>

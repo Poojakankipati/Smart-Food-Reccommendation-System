@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BVC FOOD BITE | Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{box-sizing:border-box;font-family:"Segoe UI", Arial, sans-serif;}
+body{
+  margin:0;
+  min-height:100vh;
+  background:
+    linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)),
+    url("https://png.pngtree.com/background/20250102/original/pngtree-advertising-restaurant-menu-with-fast-food-images-through-online-banners-social-picture-image_15837895.jpg")
+    no-repeat center / cover;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+.container{
+  width:900px;
+  background:rgba(255,255,255,0.25);
+  backdrop-filter:blur(16px);
+  border-radius:18px;
+  box-shadow:0 25px 60px rgba(0,0,0,0.35);
+  display:flex;
+  overflow:hidden;
+  position:relative;
+  border:1px solid rgba(255,255,255,0.3);
+}
+.left{
+  flex:1;
+  padding:60px;
+  background:rgba(255,255,255,0.65);
+}
+.right{
+  width:300px;
+  background:linear-gradient(135deg,#ff7a18,#ffb347);
+  color:#fff;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:26px;
+  font-weight:bold;
+  position:relative;
+}
+.hidden{display:none;}
+h1{margin-bottom:10px;}
+.subtitle{font-size:14px;margin-bottom:25px;}
+.subtitle a{color:#2563eb;text-decoration:none;}
+.input-group{margin-bottom:20px;}
+.input-group label{font-size:14px;}
+.input-group input{
+  width:100%;
+  padding:10px 0;
+  border:none;
+  border-bottom:2px solid #ccc;
+  outline:none;
+  background:transparent;
+  font-size:15px;
+}
+.input-group input:focus{border-color:#2563eb;}
+.password-group{
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+.password-group input{
+  flex:1;
+}
+.eye-icon{
+  position:absolute;
+  right:10px;
+  cursor:pointer;
+  user-select:none;
+  width:20px;
+  height:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#666;
+}
+.eye-icon:hover{color:#2563eb;}
+.eye-icon svg{
+  width:18px;
+  height:18px;
+  stroke:currentColor;
+  fill:none;
+  stroke-width:1.5;
+}
+button{
+  margin-top:15px;
+  padding:12px;
+  width:100%;
+  border-radius:25px;
+  border:none;
+  cursor:pointer;
+  font-size:15px;
+}
+.btn-primary{background:#2563eb;color:#fff;}
+.btn-outline{background:transparent;border:2px solid #2563eb;color:#2563eb;}
+.flash{padding:12px 16px;margin:12px 0;border-radius:8px;background:#fff3cd;color:#856404;border:1px solid #ffeeba;font-weight:600}
+  .notification-box{
+  padding:8px 12px 8px 18px;
+  margin:0;
+  border-radius:12px;
+  background:#fff;
+  color:#111;
+  font-weight:700;
+  font-size:13px;
+  text-align:left;
+  display:none;
+  position:absolute;
+  top:12px;
+  right:12px;
+  min-width:140px;
+  height:44px;
+  align-items:center;
+  box-shadow:0 8px 26px rgba(16,24,40,0.10);
+  z-index:1000;
+  animation:slideInRight 0.28s cubic-bezier(.2,.9,.2,1);
+  overflow:visible;
+  }
+  .notification-box.show{display:flex;align-items:center;gap:10px}
+  .notification-box::before{
+    content:'';
+    position:absolute;
+    left:-8px;
+    top:8px;
+    width:10px;
+    height:28px;
+    border-radius:6px;
+    background:linear-gradient(180deg,#0b5cff,#0b7bff);
+    box-shadow:6px 0 0 rgba(11,92,255,0.14);
+  }
+  .notification-box.error::before{
+    background:linear-gradient(180deg,#d32f2f,#ff6b6b);
+    box-shadow:6px 0 0 rgba(211,47,47,0.10);
+  }
+  .notification-box.success{color:#0b254b;background:rgba(11,92,255,0.02)}
+.notification-close{
+  margin-left:8px;
+  cursor:pointer;
+  opacity:1;
+  font-size:14px;
+  transition:opacity 0.16s;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:#f7f7f9;
+  border:1px solid rgba(16,24,40,0.04);
+  color:#444;
+  box-shadow:none;
+}
+.notification-close:hover{opacity:0.9}
+@keyframes slideInRight{
+  from{
+    opacity:0;
+    transform:translateX(100px)
+  }
+  to{
+    opacity:1;
+    transform:translateX(0)
+  }
+}
+@media(max-width:768px){
+  .notification-box{
+    right:16px;
+    left:16px;
+    width:auto;
+    top:16px
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="flash">{{ messages[0] }}</div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- ROLE SELECT (Logged-out view) -->
+  <div class="left" id="role">
+    <div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start;">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div>
+          <h1 style="margin:0;font-size:28px;color:#333">Welcome to BVC Food Bite</h1>
+          <div style="color:#555;font-size:14px">Fresh. Hot. Always on time.</div>
+        </div>
+      </div>
+
+      <p style="margin:6px 0 0;color:#444;max-width:520px">Sign in to place orders, view your past orders, and get personalized recommendations. New here? Create an account in seconds.</p>
+
+      <div style="display:flex;gap:12px;width:100%;margin-top:8px">
+        <button class="btn-primary" onclick="showUserLogin()" style="flex:1">Sign In</button>
+        <button class="btn-outline" onclick="showSignup()" style="flex:1">Create Account</button>
+      </div>
+
+      <div style="margin-top:10px;color:#666;font-size:13px">Or login as an admin to manage orders:</div>
+      <button class="btn-outline" onclick="showAdmin()" style="width:160px">Admin Login</button>
+    </div>
+  </div>
+
+  <!-- USER LOGIN -->
+  <div class="left hidden" id="userLogin">
+    <h1>User Login</h1>
+    <div class="subtitle">
+      Don’t have an account?
+      <a href="#" onclick="showSignup()">Create account</a>
+    </div>
+
+    <form method="POST" action="/login">
+      <input type="hidden" name="role" value="user">
+      <div class="input-group">
+        <label>Mobile Number</label>
+        <input id="loginMobile" name="mobile" maxlength="10" required>
+      </div>
+
+      <div class="input-group">
+        <label>Password</label>
+        <div class="password-group">
+          <input type="password" name="password" class="pwd-user-login" required>
+          <span class="eye-icon" onclick="togglePassword('pwd-user-login')">
+            <svg viewBox="0 0 24 24" class="eye-open">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 5C7 5 2.73 8.11 1 12.46c1.73 4.35 6 7.54 11 7.54s9.27-3.19 11-7.54C21.27 8.11 17 5 12 5z"/>
+            </svg>
+            <svg viewBox="0 0 24 24" class="eye-closed hidden">
+              <line x1="3" y1="3" x2="21" y2="21"/>
+              <path d="M9.88 9.88A3 3 0 0 0 12 21c1.66 0 3-1.34 3-3m0-8c1.66 0 3 1.34 3 3M12 5C7 5 2.73 8.11 1 12.46c1.73 4.35 6 7.54 11 7.54"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="btn-primary" type="submit">Login</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- USER SIGNUP -->
+  <div class="left hidden" id="userSignup">
+    <h1>Create Account</h1>
+    <div class="subtitle">
+      Already have an account?
+      <a href="#" onclick="showUserLogin()">Login</a>
+    </div>
+
+    <form method="POST" action="/register">
+      <div class="input-group">
+        <label>Name</label>
+        <input name="name" required>
+      </div>
+
+      <div class="input-group">
+        <label>Mobile Number</label>
+        <input name="mobile" maxlength="10" required>
+      </div>
+
+      <div class="input-group">
+        <label>Password</label>
+        <div class="password-group">
+          <input type="password" name="password" class="pwd-user-signup" required>
+          <span class="eye-icon" onclick="togglePassword('pwd-user-signup')">
+            <svg viewBox="0 0 24 24" class="eye-open">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 5C7 5 2.73 8.11 1 12.46c1.73 4.35 6 7.54 11 7.54s9.27-3.19 11-7.54C21.27 8.11 17 5 12 5z"/>
+            </svg>
+            <svg viewBox="0 0 24 24" class="eye-closed hidden">
+              <line x1="3" y1="3" x2="21" y2="21"/>
+              <path d="M9.88 9.88A3 3 0 0 0 12 21c1.66 0 3-1.34 3-3m0-8c1.66 0 3 1.34 3 3M12 5C7 5 2.73 8.11 1 12.46c1.73 4.35 6 7.54 11 7.54"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+
+      <button class="btn-primary" type="submit">Create Account</button>
+    </form>
+  </div>
+
+  <!-- ADMIN LOGIN -->
+  <div class="left hidden" id="admin">
+    <h1>Admin Login</h1>
+
+    <form method="POST" action="/login">
+      <input type="hidden" name="role" value="admin">
+      <div class="input-group">
+        <label>Admin Mobile</label>
+        <input name="mobile" required>
+      </div>
+
+      <div class="input-group">
+        <label>Password</label>
+        <div class="password-group">
+          <input type="password" name="password" class="pwd-admin" required>
+          <span class="eye-icon" onclick="togglePassword('pwd-admin')">
+            <svg viewBox="0 0 24 24" class="eye-open">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 5C7 5 2.73 8.11 1 12.46c1.73 4.35 6 7.54 11 7.54s9.27-3.19 11-7.54C21.27 8.11 17 5 12 5z"/>
+            </svg>
+            <svg viewBox="0 0 24 24" class="eye-closed hidden">
+              <line x1="3" y1="3" x2="21" y2="21"/>
+              <path d="M9.88 9.88A3 3 0 0 0 12 21c1.66 0 3-1.34 3-3m0-8c1.66 0 3 1.34 3 3M12 5C7 5 2.73 8.11 1 12.46c1.73 4.35 6 7.54 11 7.54"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+
+      <button class="btn-primary" type="submit">Login</button>
+    </form>
+  </div>
+
+  <div class="right">BVC FOOD BITE
+    <div class="notification-box" id="notificationBox"></div>
+  </div>
+</div>
+
+<script>
+const roleEl = document.getElementById("role");
+const userLogin = document.getElementById("userLogin");
+const userSignup = document.getElementById("userSignup");
+const admin = document.getElementById("admin");
+
+function hideAll(){
+  roleEl.classList.add("hidden");
+  userLogin.classList.add("hidden");
+  userSignup.classList.add("hidden");
+  admin.classList.add("hidden");
+}
+
+function showUserLogin(){ hideAll(); userLogin.classList.remove("hidden"); }
+function showSignup(){ hideAll(); userSignup.classList.remove("hidden"); }
+function showAdmin(){ hideAll(); admin.classList.remove("hidden"); }
+
+function togglePassword(fieldClass){
+  const field = document.querySelector("." + fieldClass);
+  const parent = field.parentElement;
+  const eyeOpen = parent.querySelector(".eye-open");
+  const eyeClosed = parent.querySelector(".eye-closed");
+  
+  if(field.type === "password"){
+    field.type = "text";
+    eyeOpen.classList.add("hidden");
+    eyeClosed.classList.remove("hidden");
+  } else {
+    field.type = "password";
+    eyeOpen.classList.remove("hidden");
+    eyeClosed.classList.add("hidden");
+  }
+}
+
+// OTP option removed — login via password only
+
+// Show notification for logout/account messages
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const notifBox = document.getElementById('notificationBox');
+  
+  function showNotif(message, type = 'success'){
+    notifBox.textContent = message;
+    notifBox.className = 'notification-box show ' + type;
+    
+    // Add close button
+    const closeBtn = document.createElement('span');
+    closeBtn.className = 'notification-close';
+    closeBtn.textContent = '✕';
+    closeBtn.onclick = () => notifBox.classList.remove('show');
+    notifBox.appendChild(closeBtn);
+    
+    setTimeout(() => notifBox.classList.remove('show'), 4000);
+  }
+  
+  if(params.has('logged_out')){
+    showNotif('Logged out', 'success');
+  }
+  if(params.has('account_error')){
+    showNotif('Account does not exist. Please create an account.', 'error');
+  }
+  if(params.has('invalid_password')){
+    showNotif('Invalid password. Please try again.', 'error');
+  }
+})();
+</script>
+
+</body>
+</html>
+
+<script>
+// If the user opened the file directly (file://), send them to the running server
+// so form actions like `/login` resolve correctly to the Flask backend.
+try{
+  if(location.protocol === 'file:'){
+    location.href = 'http://127.0.0.1:5000/';
+  }
+}catch(e){}
+</script>

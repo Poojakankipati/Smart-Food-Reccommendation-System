@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ratings & Feedback | Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{font-family:Arial;margin:0;background:#f3f4f6}
+header{background:#1e293b;color:#fff;padding:16px 22px;display:flex;justify-content:space-between;align-items:center}
+header h2{margin:0}
+.logout{background:#ff7043;border:none;padding:8px 18px;border-radius:20px;color:#fff;font-weight:bold;cursor:pointer}
+.container{padding:20px}
+.feedback-card{background:#fff;padding:14px;border-radius:10px;margin-bottom:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1)}
+.feedback-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.item-name{font-weight:700;color:#ff7043}
+.rating{color:#ffc107;font-weight:bold}
+.user-info{font-size:12px;color:#666;margin:4px 0}
+.review-text{font-style:italic;margin:8px 0;padding:8px;background:#f9f9f9;border-left:3px solid #ff7043}
+.empty{text-align:center;color:#999;padding:60px 20px}
+.stats{background:#fff;padding:14px;border-radius:10px;margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stat-box{text-align:center}
+.stat-number{font-size:28px;font-weight:700;color:#ff7043}
+.stat-label{font-size:12px;color:#666}
+</style>
+</head>
+<body>
+<header>
+  <h2>⭐ Ratings & Feedback</h2>
+  <button class="logout" onclick="logout()">Logout</button>
+</header>
+
+<div class="container">
+  <div class="stats">
+    <div class="stat-box">
+      <div class="stat-number" id="totalRatings">0</div>
+      <div class="stat-label">Total Ratings</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" id="avgRating">0</div>
+      <div class="stat-label">Avg Rating</div>
+    </div>
+  </div>
+
+  <h3>📋 All Feedback</h3>
+  <div id="feedback"></div>
+</div>
+
+<script>
+if(localStorage.getItem("role") !== "admin"){
+  alert("Access denied");
+  location.href = "login.html";
+
+try{ if(location.protocol === 'file:') location.href = 'http://127.0.0.1:5000/'; }catch(e){}
+
+}
+
+const feedbackDiv = document.getElementById('feedback');
+const totalRatingsEl = document.getElementById('totalRatings');
+const avgRatingEl = document.getElementById('avgRating');
+
+async function loadFeedback(){
+  try{
+    const res = await fetch('/api/ratings');
+    if(!res.ok) throw new Error('API error');
+    const ratings = await res.json();
+    
+    feedbackDiv.innerHTML = '';
+    
+    if(!ratings.length){
+      feedbackDiv.innerHTML = '<div class="empty">No feedback yet</div>';
+      totalRatingsEl.innerText = '0';
+      avgRatingEl.innerText = '0';
+      return;
+    }
+    
+    let totalRating = 0;
+    ratings.forEach(r => {
+      totalRating += r.rating;
+      const card = document.createElement('div');
+      card.className = 'feedback-card';
+      card.innerHTML = `
+        <div class="feedback-header">
+          <div class="item-name">${r.item_name}</div>
+          <div class="rating">${'⭐'.repeat(r.rating)}</div>
+        </div>
+        <div class="user-info">
+          <b>${r.user_name}</b> (${r.user_mobile})<br>
+          <small>${new Date(r.created_at).toLocaleDateString()}</small>
+        </div>
+        ${r.review ? `<div class="review-text">"${r.review}"</div>` : ''}
+      `;
+      feedbackDiv.appendChild(card);
+    });
+    
+    totalRatingsEl.innerText = ratings.length;
+    avgRatingEl.innerText = (totalRating / ratings.length).toFixed(1);
+  }catch(e){
+    feedbackDiv.innerHTML = '<div class="empty">Error loading feedback</div>';
+  }
+}
+
+loadFeedback();
+setInterval(loadFeedback, 30000); // refresh every 30s
+
+function logout(){
+  localStorage.clear();
+  location.href = "login.html";
+}
+</script>
+</body>
+</html>
